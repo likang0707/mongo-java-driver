@@ -1713,10 +1713,11 @@ collection.bulkWrite(Arrays.asList(
 &lt;a href=&#34;https://github.com/mongodb/specifications/blob/master/source/max-staleness/max-staleness.rst&#34;&gt;maximum staleness for secondary reads&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;Support for the
 &lt;a href=&#34;https://github.com/mongodb/specifications/blob/master/source/mongodb-handshake/handshake.rst&#34;&gt;MongoDB handshake protocol&lt;/a&gt;.&lt;/li&gt;
-&lt;li&gt;Builders for &lt;a href=&#34;http://docs.mongodb.org/manual/release-notes/3.3-dev-series/#aggregation
+&lt;li&gt;Builders for &lt;a href=&#34;http://docs.mongodb.org/manual/release-notes/3.4/#aggregation
 &#34;&gt;eight new aggregation pipeline stages&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;Helpers for creating &lt;a href=&#34;http://docs.mongodb.org/manual/release-notes/3.3-dev-series/#views
+&lt;li&gt;Helpers for creating &lt;a href=&#34;http://docs.mongodb.org/manual/release-notes/3.4/#views
 &#34;&gt;read-only views&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Support for the &lt;a href=&#34;https://docs.mongodb.com/master/release-notes/3.4/#linearizable-read-concern&#34;&gt;linearizable read concern&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h3 id=&#34;support-for-jndi&#34;&gt;Support for JNDI&lt;/h3&gt;
