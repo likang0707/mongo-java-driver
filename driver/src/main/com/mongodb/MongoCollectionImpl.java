@@ -28,6 +28,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.apollo.UpdateBatchBson;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.DeleteManyModel;
@@ -376,6 +377,31 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         return updateOne(filter, update, new UpdateOptions());
     }
 
+    /**
+     * added by likang 2017-03-29
+     * @param list
+     * @return
+     */
+    @Override
+    public UpdateResult updateOneBatch(List<UpdateBatchBson> list) {
+//        UpdateOptions updateOptions = new UpdateOptions();
+        boolean multi = false;
+        List<WriteRequest> requests = new ArrayList<WriteRequest>(list.size());
+        for (UpdateBatchBson updateBatchBson:list) {
+            if (updateBatchBson == null) {
+                throw new IllegalArgumentException("updateBatchBson can not contain a null value");
+            }
+            UpdateRequest updateRequest = new UpdateRequest(toBsonDocument(updateBatchBson.getFilter()), toBsonDocument(updateBatchBson.getUpdate()),WriteRequest.Type.UPDATE);
+            updateRequest.upsert(updateBatchBson.getUpdateOptions().isUpsert()).multi(multi).collation(updateBatchBson.getUpdateOptions().getCollation());
+            requests.add(updateRequest);
+        }
+//        updateOptions.getBypassDocumentValidation();
+        //If true, allows the write to opt-out of document level validation
+        //是否验证输入字段和文档对应字段属性相同，如果为true允许跳过验证，false不允许跳过验证
+        boolean bypassDocumentValidation = false;
+        return toUpdateResult4UpdateBatch(executeBatchWriteRequest(requests, bypassDocumentValidation));
+    }
+
     @Override
     public UpdateResult updateOne(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
         return update(filter, update, updateOptions, false);
@@ -560,6 +586,27 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         }
     }
 
+    /**
+     * added by likang 2017-03-29
+     * @param requests
+     * @param bypassDocumentValidation
+     * @return
+     */
+    private BulkWriteResult executeBatchWriteRequest(final List<WriteRequest> requests, final Boolean bypassDocumentValidation) {
+        try {
+            return executor.execute(new MixedBulkWriteOperation(namespace, requests, true, writeConcern)
+                    .bypassDocumentValidation(bypassDocumentValidation));
+        } catch (MongoBulkWriteException e) {
+            if (e.getWriteErrors().isEmpty()) {
+                throw new MongoWriteConcernException(e.getWriteConcernError(),
+                        translateBulkWriteResult(requests.get(0), e.getWriteResult()),
+                        e.getServerAddress());
+            } else {
+                throw new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
+            }
+        }
+    }
+
     private WriteConcernResult translateBulkWriteResult(final WriteRequest request, final BulkWriteResult writeResult) {
         switch (request.getType()) {
             case INSERT:
@@ -574,6 +621,26 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                                        ? null : writeResult.getUpserts().get(0).getId());
             default:
                 throw new MongoInternalException("Unhandled write request type: " + request.getType());
+        }
+    }
+
+    /**
+     * added by likang 2017-03-29
+     * @param result
+     * @return
+     */
+    private UpdateResult toUpdateResult4UpdateBatch(final com.mongodb.bulk.BulkWriteResult result) {
+        if (result.wasAcknowledged()) {
+            Long modifiedCount = result.isModifiedCountAvailable() ? (long) result.getModifiedCount() : null;
+            BsonValue upsertedId = null;
+            long upsertedCount = 0;
+            if(!result.getUpserts().isEmpty()) {
+                upsertedId = result.getUpserts().get(0).getId();
+                upsertedCount = result.getUpserts().size();
+            }
+            return UpdateResult.acknowledged(result.getMatchedCount(), modifiedCount, upsertedCount, upsertedId);
+        } else {
+            return UpdateResult.unacknowledged();
         }
     }
 

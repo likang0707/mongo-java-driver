@@ -22,6 +22,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.client.apollo.UpdateBatchBson;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.DeleteOptions;
@@ -432,6 +433,14 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
     UpdateResult updateOne(Bson filter, Bson update);
+
+    /**
+     * 实现批量更新
+     * @param list
+     * @return
+     */
+    UpdateResult updateOneBatch(List<UpdateBatchBson> list);
+
 
     /**
      * Update a single document in the collection according to the specified arguments.

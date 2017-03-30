@@ -58,6 +58,14 @@ public abstract class UpdateResult {
     public abstract long getModifiedCount();
 
     /**
+     * added by likang 2017-03-29
+     * Gets the number of documents upserted by the update.
+     *
+     * @return the number of documents modified
+     */
+    public abstract long getUpsertedCount();
+
+    /**
      * If the replace resulted in an inserted document, gets the _id of the inserted document, otherwise null.
      *
      * @return if the replace resulted in an inserted document, the _id of the inserted document, otherwise null
@@ -77,6 +85,20 @@ public abstract class UpdateResult {
     }
 
     /**
+     * Create an acknowledged UpdateResult
+     * add by likang
+     * @param matchedCount  the number of documents matched
+     * @param modifiedCount the number of documents modified
+     * @param upsertedCount the number of documents upserted
+     * @param upsertedId    if the replace resulted in an inserted document, the id of the inserted document
+     * @return an acknowledged UpdateResult
+     * @return
+     */
+    public static UpdateResult acknowledged(final long matchedCount, final Long modifiedCount,final long upsertedCount, final BsonValue upsertedId) {
+        return new AcknowledgedUpdateResult(matchedCount, modifiedCount, upsertedCount, upsertedId);
+    }
+
+    /**
      * Create an unacknowledged UpdateResult
      *
      * @return an unacknowledged UpdateResult
@@ -88,12 +110,23 @@ public abstract class UpdateResult {
     private static class AcknowledgedUpdateResult extends UpdateResult {
         private final long matchedCount;
         private final Long modifiedCount;
+        //增加修改插入数量
+        private final long upsertedCount;
+
         private final BsonValue upsertedId;
 
         AcknowledgedUpdateResult(final long matchedCount, final Long modifiedCount, final BsonValue upsertedId) {
             this.matchedCount = matchedCount;
             this.modifiedCount = modifiedCount;
             this.upsertedId = upsertedId;
+            this.upsertedCount = 0;
+        }
+
+        AcknowledgedUpdateResult(final long matchedCount, final Long modifiedCount, final long upsertedCount, final BsonValue upsertedId) {
+            this.matchedCount = matchedCount;
+            this.modifiedCount = modifiedCount;
+            this.upsertedId = upsertedId;
+            this.upsertedCount = upsertedCount;
         }
 
         @Override
@@ -104,6 +137,11 @@ public abstract class UpdateResult {
         @Override
         public long getMatchedCount() {
             return matchedCount;
+        }
+
+        @Override
+        public long getUpsertedCount() {
+            return upsertedCount;
         }
 
         @Override
@@ -186,6 +224,16 @@ public abstract class UpdateResult {
         @Override
         public long getModifiedCount() {
             throw getUnacknowledgedWriteException();
+        }
+
+        /**
+         * added by likang 2017-03-29
+         * 因修改了父类 子类先增加此方法待实现
+         * @return
+         */
+        @Override
+        public long getUpsertedCount() {
+            return 0;
         }
 
         @Override
